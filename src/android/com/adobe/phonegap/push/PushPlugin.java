@@ -88,12 +88,12 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
   private void createChannel(JSONObject channel) throws JSONException {
     // only call on Android O and above
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      Log.v(LOG_TAG, "createChannel");
+      Log.i(LOG_TAG, "createChannel");
       final NotificationManager notificationManager = (NotificationManager) cordova.getActivity()
           .getSystemService(Context.NOTIFICATION_SERVICE);
 
       String packageName = getApplicationContext().getPackageName();
-      Log.v(LOG_TAG, "createChannel packageName=" + packageName);
+      Log.i(LOG_TAG, "createChannel packageName=" + packageName);
       NotificationChannel mChannel = new NotificationChannel(channel.getString(CHANNEL_ID),
           channel.optString(CHANNEL_DESCRIPTION, ""),
           channel.optInt(CHANNEL_IMPORTANCE, NotificationManager.IMPORTANCE_DEFAULT));
@@ -110,25 +110,38 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
       mChannel.setShowBadge(badge);
 
       String sound = channel.optString(SOUND, "default");
-      Log.v(LOG_TAG, "createChannel sound=" + sound);
+      Log.i(LOG_TAG, "createChannel sound=" + sound);
       AudioAttributes audioAttributes = new AudioAttributes.Builder()
           .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
           .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE).build();
       if (SOUND_RINGTONE.equals(sound)) {
         mChannel.setSound(android.provider.Settings.System.DEFAULT_RINGTONE_URI, audioAttributes);
       } else if (sound != null && !sound.contentEquals(SOUND_DEFAULT)) {
-        //Uri soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/raw/" + sound);
-        Uri soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/raw/" + getApplicationContext().getResources().getIdentifier(sound, "raw", packageName));
-        Log.v(LOG_TAG, "createChannel uri=" + ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/raw/" + getApplicationContext().getResources().getIdentifier(sound, "raw", packageName));
+        //Uri soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/raw/" + getApplicationContext().getResources().getIdentifier(sound, "raw", packageName));
+        Uri soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/raw/" + sound);
+        Log.i(LOG_TAG, "createChannel soundUri=" + ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/raw/" + sound);
         mChannel.setSound(soundUri, audioAttributes);
       } else {
         mChannel.setSound(android.provider.Settings.System.DEFAULT_NOTIFICATION_URI, audioAttributes);
       }
 
-      boolean vibrate = channel.optBoolean(CHANNEL_VIBRATION, true);
-      Log.v(LOG_TAG, "createChannel vibrate=" + vibrate);
-      mChannel.enableVibration(vibrate);
+      // If vibration settings is an array set vibration pattern, else set enable vibration.
+      JSONArray pattern = channel.optJSONArray(CHANNEL_VIBRATION);
+      if (pattern != null) {
+        Log.i(LOG_TAG, "createChannel vibrate=pattern");
+        int patternLength = pattern.length();
+        long[] patternArray = new long[patternLength];
+        for (int i = 0; i < patternLength; i++) {
+          patternArray[i] = pattern.optLong(i);
+        }
+        mChannel.setVibrationPattern(patternArray);
+      } else {
+        boolean vibrate = channel.optBoolean(CHANNEL_VIBRATION, true);
+        mChannel.enableVibration(vibrate);
+        Log.i(LOG_TAG, "createChannel vibrate=" + vibrate);
+      }
 
+      Log.i(LOG_TAG, "createChannel finished");
       notificationManager.createNotificationChannel(mChannel);
     }
   }
