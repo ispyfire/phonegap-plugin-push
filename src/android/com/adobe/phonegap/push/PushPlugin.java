@@ -1,5 +1,9 @@
 package com.adobe.phonegap.push;
 
+import com.ispyfire.iSpyMobile.R;
+import java.lang.reflect.Field;
+import java.lang.NoSuchFieldException;
+import java.lang.IllegalAccessException;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.NotificationChannel;
@@ -114,7 +118,21 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
       if (SOUND_RINGTONE.equals(sound)) {
         mChannel.setSound(android.provider.Settings.System.DEFAULT_RINGTONE_URI, audioAttributes);
       } else if (sound != null && !sound.contentEquals(SOUND_DEFAULT)) {
-        Uri soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/raw/" + sound);
+        try {
+          Field[] fields=R.raw.class.getFields();
+          for(int count=0; count < fields.length; count++){
+              String fname = fields[count].getName();
+              Log.i(LOG_TAG, "Raw Asset Name: " + fname + ", Raw Asset Id: " + Integer.toString(R.raw.class.getField(fname).getInt(null)));
+              if (fname.equals(sound)) {
+                Log.i(LOG_TAG, "Found raw sound: " + sound + ", id: " + Integer.toString(R.raw.class.getField(fname).getInt(null)));
+                sound = Integer.toString(R.raw.class.getField(fname).getInt(null));
+              }
+          }
+        } catch (NoSuchFieldException ex) {
+        } catch (IllegalAccessException ex) {
+        }
+        Uri soundUri = Uri.parse(ContentResolver.SCHEME_ANDROID_RESOURCE + "://" + packageName + "/" + sound);
+        Log.i(LOG_TAG, "Notification sound Uri: " + soundUri);
         mChannel.setSound(soundUri, audioAttributes);
       } else {
         mChannel.setSound(android.provider.Settings.System.DEFAULT_NOTIFICATION_URI, audioAttributes);
