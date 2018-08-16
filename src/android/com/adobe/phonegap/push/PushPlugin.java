@@ -119,13 +119,13 @@ public class PushPlugin extends CordovaPlugin implements PushConstants {
         mChannel.setSound(android.provider.Settings.System.DEFAULT_RINGTONE_URI, audioAttributes);
       } else if (sound != null && !sound.contentEquals(SOUND_DEFAULT)) {
         try {
-          Field[] fields=R.raw.class.getFields();
+          Field[] fields=R.class.getFields();
           for(int count=0; count < fields.length; count++){
               String fname = fields[count].getName();
-              Log.i(LOG_TAG, "Raw Asset Name: " + fname + ", Raw Asset Id: " + Integer.toString(R.raw.class.getField(fname).getInt(null)));
+              Log.i(LOG_TAG, "Raw Asset Name: " + fname + ", Raw Asset Id: " + Integer.toString(R.class.getField(fname).getInt(null)));
               if (fname.equals(sound)) {
-                Log.i(LOG_TAG, "Found raw sound: " + sound + ", id: " + Integer.toString(R.raw.class.getField(fname).getInt(null)));
-                sound = Integer.toString(R.raw.class.getField(fname).getInt(null));
+                Log.i(LOG_TAG, "Found raw sound: " + sound + ", id: " + Integer.toString(R.class.getField(fname).getInt(null)));
+                sound = Integer.toString(R.class.getField(fname).getInt(null));
               }
           }
         } catch (NoSuchFieldException ex) {
